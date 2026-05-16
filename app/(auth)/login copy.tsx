@@ -28,10 +28,10 @@ function LockIcon() {
 }
 
 export default function LoginScreen() {
-  const [employeeId, setEmployeeId] = useState('ADMIN001');
-  const [password, setPassword] = useState('password');
   // const [employeeId, setEmployeeId] = useState('');
   // const [password, setPassword] = useState('');
+  const [employeeId, setEmployeeId] = useState('ADMIN001');
+  const [password, setPassword] = useState('password');
   const [loading, setLoading] = useState(false);
   const { setToken, setUser } = useAuthStore();
   const router = useRouter();
@@ -46,7 +46,7 @@ export default function LoginScreen() {
       const data = await authApi.login(employeeId, password);
       setToken(data.token);
       setUser(data.user);
-      router.replace('/(admin)/dashboard' as any);
+      router.replace('/(admin)/dashboard/index' as any);
     } catch (error: any) {
       const msg = error?.response?.data?.errors?.employee_id?.[0]
         ?? error?.response?.data?.message
@@ -69,7 +69,7 @@ export default function LoginScreen() {
           {/* Ganti logoCircle View dengan Image */}
           <View style={styles.logoCircle}>
             <Image
-              source={require('@/assets/images/wuling-logo.png')}
+              source={require('../../assets/images/wuling-logo.png')}
               style={styles.logoImage}
               resizeMode="contain"
             />
@@ -125,7 +125,7 @@ export default function LoginScreen() {
           </View>
 
           <Text style={styles.footer}>
-            © 2026 Wuling Motors. All rights reserved.
+            © 2026 PT Wuling Motors. All rights reserved.
           </Text>
         </View>
       </ScrollView>
@@ -143,11 +143,30 @@ const styles = StyleSheet.create({
   banner: {
     height: height * 0.40,
     backgroundColor: colors.primary,
-    borderBottomLeftRadius: borderRadius.xl,
-    borderBottomRightRadius: borderRadius.xl,
+    borderBottomLeftRadius: borderRadius.xxl,
+    borderBottomRightRadius: borderRadius.xxl,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+  },
+  logoCircle: {
+    width: 96,
+    height: 96,
+    borderRadius: borderRadius.full,
+    backgroundColor: '#FFFFFF',       // putih agar logo merah kontras
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
+    padding: 16,                      // ← beri padding agar logo tidak terlalu mepet
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
   },
   logoLetter: {
     fontSize: 40,
@@ -233,24 +252,5 @@ const styles = StyleSheet.create({
     color: colors.text.disabled,
     textAlign: 'center',
     marginTop: spacing.xxl,
-  },
-  logoCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: borderRadius.full,
-    backgroundColor: '#FFFFFF',       // putih agar logo merah kontras
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 8,
-    padding: 16,                      // ← beri padding agar logo tidak terlalu mepet
-  },
-  logoImage: {
-    width: '100%',
-    height: '100%',
   },
 });
