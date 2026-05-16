@@ -17,8 +17,8 @@ function AuthGuard() {
   useEffect(() => {
     if (isLoading) return;
     const inAuth = segments[0] === '(auth)';
-    if (!token && !inAuth) router.replace('/(auth)/login');
-    if (token && inAuth) router.replace('/(admin)/dashboard');
+    if (!token && !inAuth) router.replace('/(auth)/login' as any);
+    if (token && inAuth) router.replace('/(admin)/dashboard' as any);
   }, [token, isLoading, segments]);
 
   return (

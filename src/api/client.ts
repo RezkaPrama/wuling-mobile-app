@@ -1,7 +1,7 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
-const API_URL = 'http://127.0.0.1:8000/'; // ganti dengan IP server Laravel kamu
+const API_URL = 'https://maintenance.eazyfit.id'; // ganti dengan IP server Laravel kamu
 
 export const apiClient = axios.create({
   baseURL: `${API_URL}/api`,

@@ -3,8 +3,10 @@ import { create } from 'zustand';
 
 interface User {
   id: number;
+  employee_id: string;  // ← tambah ini
   name: string;
   email: string;
+  department: string;   // ← tambah ini
   role: string;
 }
 
