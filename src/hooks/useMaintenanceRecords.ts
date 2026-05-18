@@ -50,6 +50,7 @@ export interface MaintenanceRecordFilters {
 }
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://maintenance.eazyfit.id/api';
+// const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://127.0.0.1:8000/api';
 
 async function fetchMaintenanceRecords(
   token: string,
