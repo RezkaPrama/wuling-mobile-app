@@ -1,15 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef } from 'react';
 import {
-    Animated,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  Animated,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 
-export type AdminTab = 'dashboard' | 'records' | 'equipment' | 'schedules';
+export type AdminTab = 'dashboard' | 'maps' | 'equipment' | 'profiles';
 
 interface NavItem {
   id: AdminTab;
@@ -20,9 +20,9 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { id: 'dashboard',  label: 'Tasks',    icon: 'calendar-outline',  iconActive: 'calendar' },
-  { id: 'records',    label: 'Metrics',  icon: 'pulse-outline',     iconActive: 'pulse' },
-  { id: 'equipment',  label: 'Layout',   icon: 'map-outline',       iconActive: 'map' },
-  { id: 'schedules',  label: 'Profile',  icon: 'settings-outline',  iconActive: 'settings' },
+  { id: 'equipment',    label: 'Equipment',  icon: 'pulse-outline',     iconActive: 'pulse' },
+  { id: 'maps',  label: 'Layout',   icon: 'map-outline',       iconActive: 'map' },
+  { id: 'profiles',  label: 'settings',  icon: 'settings-outline',  iconActive: 'settings' },
 ];
 
 interface FloatingNavProps {

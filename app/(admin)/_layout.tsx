@@ -6,9 +6,9 @@ import { StyleSheet, View } from 'react-native';
 // Mapping: path segment → AdminTab
 const SEGMENT_TO_TAB: Record<string, AdminTab> = {
   dashboard:  'dashboard',
-  records:    'records',
+  maps:       'maps',
   equipment:  'equipment',
-  schedules:  'schedules',
+  profiles:   'profiles',
 };
 
 function getActiveTab(pathname: string): AdminTab {
@@ -29,14 +29,14 @@ export default function AdminLayout() {
       case 'dashboard':
         router.push('/(admin)/dashboard' as any);
         break;
-      case 'records':
-        router.push('/(admin)/records' as any);
-        break;
       case 'equipment':
         router.push('/(admin)/equipment' as any);
         break;
-      case 'schedules':
-        router.push('/(admin)/schedules' as any);
+      case 'maps':
+        router.push('/(admin)/maps' as any);
+        break;
+      case 'profiles':
+        router.push('/(admin)/profiles' as any);
         break;
     }
   }, [router]);
