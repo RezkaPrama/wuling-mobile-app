@@ -1,5 +1,6 @@
 import { useAuthStore } from '@/src/store/authStore';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import * as NavigationBar from 'expo-navigation-bar';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
 
@@ -30,6 +31,11 @@ function AuthGuard() {
 }
 
 export default function RootLayout() {
+  useEffect(() => {
+    NavigationBar.setVisibilityAsync('hidden');
+    NavigationBar.setBehaviorAsync('overlay-swipe');
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthGuard />

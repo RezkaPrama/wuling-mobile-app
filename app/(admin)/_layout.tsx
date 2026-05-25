@@ -1,68 +1,75 @@
-import { Tabs } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import FloatingNav, { AdminTab } from '@/src/components/common/FloatingNav';
+import { Tabs, usePathname, useRouter } from 'expo-router';
+import { useCallback } from 'react';
+import { StyleSheet, View } from 'react-native';
 
-function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
+// Mapping: path segment → AdminTab
+const SEGMENT_TO_TAB: Record<string, AdminTab> = {
+  dashboard:  'dashboard',
+  records:    'records',
+  equipment:  'equipment',
+  schedules:  'schedules',
+};
+
+function getActiveTab(pathname: string): AdminTab {
+  // pathname contoh: "/(admin)/dashboard" atau "/(admin)/records/from-qr"
+  const segments = pathname.split('/').filter(Boolean);
+  // segments[0] = "(admin)", segments[1] = "dashboard" dst.
+  const seg = segments[1] ?? 'dashboard';
+  return SEGMENT_TO_TAB[seg] ?? 'dashboard';
+}
+
+export default function AdminLayout() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const activeTab = getActiveTab(pathname);
+
+  const handleChangeTab = useCallback((tab: AdminTab) => {
+    switch (tab) {
+      case 'dashboard':
+        router.push('/(admin)/dashboard' as any);
+        break;
+      case 'records':
+        router.push('/(admin)/records' as any);
+        break;
+      case 'equipment':
+        router.push('/(admin)/equipment' as any);
+        break;
+      case 'schedules':
+        router.push('/(admin)/schedules' as any);
+        break;
+    }
+  }, [router]);
+
   return (
-    <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
-      <Text style={styles.iconText}>{emoji}</Text>
+    <View style={styles.root}>
+      {/* Tabs dengan tab bar bawaan disembunyikan */}
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarStyle: styles.hiddenTabBar, // ← sembunyikan tab bar native
+        }}
+      >
+        <Tabs.Screen name="dashboard" />
+        <Tabs.Screen name="records" />
+        <Tabs.Screen name="equipment" />
+        <Tabs.Screen name="schedules" />
+        <Tabs.Screen name="logout" options={{ href: null }} />
+      </Tabs>
+
+      {/* Floating nav custom */}
+      <FloatingNav activeTab={activeTab} onChangeTab={handleChangeTab} />
     </View>
   );
 }
 
-export default function AdminLayout() {
-  return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarShowLabel: false,
-        tabBarStyle: styles.tabBar,
-      }}
-    >
-      <Tabs.Screen
-        name="dashboard"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon emoji="📅" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="records"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon emoji="⚡" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="equipment"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon emoji="📍" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="schedules"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon emoji="⚙️" focused={focused} />,
-        }}
-      />
-    </Tabs>
-  );
-}
-
 const styles = StyleSheet.create({
-  tabBar: {
-    height: 72,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-    backgroundColor: '#FFFFFF',
-    paddingBottom: 8,
+  root: {
+    flex: 1,
   },
-  iconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+  hiddenTabBar: {
+    display: 'none',       // sembunyikan tab bar bawaan Expo
+    height: 0,
+    position: 'absolute',
   },
-  iconWrapActive: {
-    backgroundColor: '#FEE2E2',
-  },
-  iconText: { fontSize: 22 },
 });

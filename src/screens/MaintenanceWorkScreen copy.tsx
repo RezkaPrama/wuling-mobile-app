@@ -1,4 +1,3 @@
-import { apiClient } from '@/src/api/client';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -13,7 +12,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -32,9 +31,10 @@ interface RecordItem {
   sub_equipment: string;
   check_item: string;
   maintenance_standard: string;
-  pm_types: string[];
+  pm_types: string[];        // dari template (wajib)
   man_power: number;
   time_minutes: number;
+  // state lokal
   status: ItemStatus;
   remarks: string;
   measurement: string;
@@ -42,7 +42,7 @@ interface RecordItem {
   actual_time_minutes: string;
   requires_action: boolean;
   action_required: string;
-  done_pm_types: string[];
+  done_pm_types: string[];   // yang sudah dicentang teknisi
   photos: string[];
 }
 
@@ -59,94 +59,101 @@ interface RecordDetail {
   start_time: string;
   technician_name: string;
   checker_name: string | null;
+  items: RecordItem[];
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const PM_TYPES: PmType[] = [
-  { key: 'Check',     label: 'CHECK',  icon: '✓'  },
-  { key: 'Lubricate', label: 'LUBE',   icon: '💧' },
-  { key: 'Cleaning',  label: 'CLEAN',  icon: '🧹' },
-  { key: 'Tighten',   label: 'TIGHT',  icon: '🔩' },
-  { key: 'Measure',   label: 'MEAS',   icon: '📏' },
-  { key: 'Replace',   label: 'REPL',   icon: '🔄' },
+  { key: 'Check',     label: 'CHECK',   icon: '✓' },
+  { key: 'Lubricate', label: 'LUBE',    icon: '💧' },
+  { key: 'Cleaning',  label: 'CLEAN',   icon: '🧹' },
+  { key: 'Tighten',   label: 'TIGHT',   icon: '🔩' },
+  { key: 'Measure',   label: 'MEAS',    icon: '📏' },
+  { key: 'Replace',   label: 'REPL',    icon: '🔄' },
 ];
 
 const colors = {
-  primary:      '#D91E1E',
-  primaryLight: '#FEE2E2',
-  ok:           '#10B981',
-  okLight:      '#D1FAE5',
-  ng:           '#EF4444',
-  ngLight:      '#FEE2E2',
-  na:           '#9CA3AF',
-  naLight:      '#F3F4F6',
-  warning:      '#F59E0B',
-  warningLight: '#FEF3C7',
-  blue:         '#3B82F6',
-  blueLight:    '#EFF6FF',
-  bg:           '#F9FAFB',
-  card:         '#FFFFFF',
-  border:       '#E5E7EB',
-  text:         '#111827',
-  subtext:      '#6B7280',
-  disabled:     '#9CA3AF',
+  primary:     '#D91E1E',
+  primaryLight:'#FEE2E2',
+  ok:          '#10B981',
+  okLight:     '#D1FAE5',
+  ng:          '#EF4444',
+  ngLight:     '#FEE2E2',
+  na:          '#9CA3AF',
+  naLight:     '#F3F4F6',
+  warning:     '#F59E0B',
+  warningLight:'#FEF3C7',
+  blue:        '#3B82F6',
+  blueLight:   '#EFF6FF',
+  bg:          '#F9FAFB',
+  card:        '#FFFFFF',
+  border:      '#E5E7EB',
+  text:        '#111827',
+  subtext:     '#6B7280',
+  disabled:    '#9CA3AF',
 };
 
-// ── API helpers ───────────────────────────────────────────────────────────────
-/**
- * GET /api/maintenance-record/maintenance-records/{id}
- * Returns { success, data: RecordDetail, items: RecordItem[], progress }
- */
-async function fetchRecord(recordId: number) {
-  const res = await apiClient.get(
-    `/maintenance-record/maintenance-records/${recordId}`
-  );
-  return res.data; // { success, data, items, progress }
-}
-
-/**
- * PUT /api/maintenance-record/maintenance-records/{recordId}/items/{itemId}
- */
-async function saveItem(recordId: number, itemId: number, payload: object) {
-  const res = await apiClient.put(
-    `/maintenance-record/maintenance-records/${recordId}/items/${itemId}`,
-    payload
-  );
-  return res.data; // { success, message, progress }
-}
-
-/**
- * POST /api/maintenance-record/maintenance-records/{id}/complete
- */
-async function completeRecord(recordId: number) {
-  const res = await apiClient.post(
-    `/maintenance-record/maintenance-records/${recordId}/complete`
-  );
-  return res.data; // { success, message, data }
-}
-
-// ── Map API item → local RecordItem ──────────────────────────────────────────
-function mapApiItem(apiItem: any): RecordItem {
-  return {
-    id:                   apiItem.id,
-    item_number:          apiItem.item_number,
-    sub_equipment:        apiItem.sub_equipment ?? 'General',
-    check_item:           apiItem.check_item,
-    maintenance_standard: apiItem.maintenance_standard,
-    pm_types:             Array.isArray(apiItem.pm_types) ? apiItem.pm_types : [],
-    man_power:            apiItem.man_power ?? 1,
-    time_minutes:         apiItem.time_minutes ?? 0,
-    status:               (apiItem.status as ItemStatus) ?? 'pending',
-    remarks:              apiItem.remarks ?? '',
-    measurement:          apiItem.measurements?.value ?? '',
-    actual_man_power:     apiItem.actual_man_power ? String(apiItem.actual_man_power) : '',
-    actual_time_minutes:  apiItem.actual_time_minutes ? String(apiItem.actual_time_minutes) : '',
-    requires_action:      Boolean(apiItem.requires_action),
-    action_required:      apiItem.action_required ?? '',
-    done_pm_types:        [],   // API belum menyimpan ini; bisa dikembangkan
-    photos:               Array.isArray(apiItem.photos) ? apiItem.photos : [],
-  };
-}
+// ── Mock Data (ganti dengan API call nyata) ───────────────────────────────────
+const MOCK_RECORD: RecordDetail = {
+  id: 1,
+  record_number:   'PM-20260516-0001',
+  equipment_name:  'Friction Roller Bed',
+  equipment_code:  'BD-BDC-FRB-01/50',
+  etm_group:       'Body Shop',
+  pm_cycle:        '3m',
+  template_name:   'FRB 3-Monthly PM',
+  doc_number:      'DOC-FRB-001',
+  maintenance_date:'2026-05-16',
+  start_time:      '08:00',
+  technician_name: 'Ahmad Fauzi',
+  checker_name:    null,
+  items: [
+    {
+      id: 1, item_number: 1, sub_equipment: 'Drive Unit FRB',
+      check_item: 'Baut drive motor',
+      maintenance_standard: 'Baut penahan motor kencang, fan motor bersih dan snapping terkunci dengan benar.',
+      pm_types: ['Check', 'Cleaning', 'Tighten'],
+      man_power: 2, time_minutes: 30,
+      status: 'pending', remarks: '', measurement: '',
+      actual_man_power: '', actual_time_minutes: '',
+      requires_action: false, action_required: '',
+      done_pm_types: [], photos: [],
+    },
+    {
+      id: 2, item_number: 2, sub_equipment: 'Drive Unit FRB',
+      check_item: 'Ukur karak spring balancing',
+      maintenance_standard: 'Jarak spring balancing 42±5 mm',
+      pm_types: ['Check', 'Measure'],
+      man_power: 1, time_minutes: 15,
+      status: 'pending', remarks: '', measurement: '',
+      actual_man_power: '', actual_time_minutes: '',
+      requires_action: false, action_required: '',
+      done_pm_types: [], photos: [],
+    },
+    {
+      id: 3, item_number: 3, sub_equipment: 'General',
+      check_item: 'Kekencangan baut mechanical lock',
+      maintenance_standard: 'Standar kekencangan baut mechanical lock 16 Nm.',
+      pm_types: ['Check', 'Tighten'],
+      man_power: 1, time_minutes: 20,
+      status: 'pending', remarks: '', measurement: '',
+      actual_man_power: '', actual_time_minutes: '',
+      requires_action: false, action_required: '',
+      done_pm_types: [], photos: [],
+    },
+    {
+      id: 4, item_number: 4, sub_equipment: 'General',
+      check_item: 'Kondisi oli gearbox',
+      maintenance_standard: 'Level oli berada di antara MIN dan MAX. Warna oli tidak hitam pekat.',
+      pm_types: ['Check', 'Lubricate'],
+      man_power: 1, time_minutes: 10,
+      status: 'pending', remarks: '', measurement: '',
+      actual_man_power: '', actual_time_minutes: '',
+      requires_action: false, action_required: '',
+      done_pm_types: [], photos: [],
+    },
+  ],
+};
 
 // ── Progress calculation ──────────────────────────────────────────────────────
 function calcProgress(items: RecordItem[]) {
@@ -172,11 +179,13 @@ function PmTypeChip({
   let txt    = colors.disabled;
   let icon   = pmType.icon;
 
-  if (isSkipped)          { bg = '#FFF0F3'; border = '#F1416C'; txt = '#F1416C'; icon = '!'; }
-  else if (isDone)        { bg = '#E0F5FF'; border = '#009EF7'; txt = '#009EF7'; }
-  else if (isPlan)        { bg = '#F5F5F5'; border = '#B5B5C3'; txt = '#7E8299'; }
+  if (!isPlan && !isDone) { bg = '#FFF'; border = colors.border; txt = '#D1D5DB'; }
+  else if (isSkipped)     { bg = '#FFF0F3'; border = '#F1416C'; txt = '#F1416C'; icon = '!'; }
+  else if (isDone && isPlan) { bg = '#E0F5FF'; border = '#009EF7'; txt = '#009EF7'; }
+  else if (isDone && !isPlan){ bg = '#FFF8E0'; border = '#FFC107'; txt = '#D07800'; }
+  else if (isPlan && !isDone){ bg = '#F5F5F5'; border = '#B5B5C3'; txt = '#7E8299'; }
 
-  if (!isPlan) return null;
+  if (!isPlan) return null; // hanya tampilkan yang plan
 
   return (
     <TouchableOpacity
@@ -205,9 +214,9 @@ function StatusButtons({
   status, onChange,
 }: { status: ItemStatus; onChange: (s: ItemStatus) => void }) {
   const btns: { key: ItemStatus; label: string; active: string; text: string }[] = [
-    { key: 'ok', label: 'OK',  active: colors.ok, text: '#fff' },
-    { key: 'ng', label: 'NG',  active: colors.ng, text: '#fff' },
-    { key: 'na', label: 'N/A', active: colors.na, text: '#fff' },
+    { key: 'ok', label: 'OK', active: colors.ok,      text: '#fff' },
+    { key: 'ng', label: 'NG', active: colors.ng,      text: '#fff' },
+    { key: 'na', label: 'N/A',active: colors.na,      text: '#fff' },
   ];
   return (
     <View style={statusStyles.row}>
@@ -239,23 +248,21 @@ const statusStyles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 8 },
   btn: {
     flex: 1, paddingVertical: 10,
-    borderWidth: 2, borderRadius: 10, alignItems: 'center',
+    borderWidth: 2, borderRadius: 10,
+    alignItems: 'center',
   },
-  txt: {
-    fontSize: 13, fontWeight: '800',
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-  },
+  txt: { fontSize: 13, fontWeight: '800', fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
 });
 
 // ── Check Item Card ───────────────────────────────────────────────────────────
 function CheckItemCard({
-  item, recordId, onUpdate, isSaving,
+  item, recordId, onUpdate,
 }: {
   item: RecordItem;
   recordId: number;
   onUpdate: (id: number, patch: Partial<RecordItem>) => void;
-  isSaving: boolean;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const hasMeasure = item.pm_types.includes('Measure');
 
   function togglePmType(key: string) {
@@ -286,16 +293,13 @@ function CheckItemCard({
           <Text style={itemStyles.checkName}>{item.check_item}</Text>
           <Text style={itemStyles.subEquip}>{item.sub_equipment}</Text>
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          {isSaving && <ActivityIndicator size="small" color={colors.warning} />}
-          {item.status !== 'pending' && (
-            <View style={[itemStyles.statusPill, { backgroundColor: getStatusColor() + '20', borderColor: getStatusColor() }]}>
-              <Text style={[itemStyles.statusPillTxt, { color: getStatusColor() }]}>
-                {item.status.toUpperCase()}
-              </Text>
-            </View>
-          )}
-        </View>
+        {item.status !== 'pending' && (
+          <View style={[itemStyles.statusPill, { backgroundColor: getStatusColor() + '20', borderColor: getStatusColor() }]}>
+            <Text style={[itemStyles.statusPillTxt, { color: getStatusColor() }]}>
+              {item.status.toUpperCase()}
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* ── Standard ── */}
@@ -312,7 +316,7 @@ function CheckItemCard({
             <PmTypeChip
               key={p.key}
               pmType={p}
-              isPlan={true}
+              isPlan={item.pm_types.includes(p.key)}
               isDone={item.done_pm_types.includes(p.key)}
               isSkipped={item.status !== 'pending' && !item.done_pm_types.includes(p.key)}
               onToggle={() => togglePmType(p.key)}
@@ -359,7 +363,7 @@ function CheckItemCard({
         </View>
       </View>
 
-      {/* ── Measurement ── */}
+      {/* ── Measurement (if applicable) ── */}
       {hasMeasure && (
         <View style={itemStyles.section}>
           <Text style={itemStyles.sectionLabel}>NILAI UKUR</Text>
@@ -403,14 +407,16 @@ function CheckItemCard({
           onPress={() => Alert.alert('Foto', 'Fitur upload foto akan segera tersedia.')}
         >
           <Text style={itemStyles.actionBtnIcon}>📷</Text>
-          <Text style={itemStyles.actionBtnTxt}>
-            Foto{item.photos.length > 0 ? ` (${item.photos.length})` : ''}
-          </Text>
+          <Text style={itemStyles.actionBtnTxt}>Foto{item.photos.length > 0 ? ` (${item.photos.length})` : ''}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[itemStyles.actionBtn, item.requires_action && itemStyles.actionBtnActive]}
-          onPress={() => onUpdate(item.id, { requires_action: !item.requires_action })}
+          onPress={() => {
+            const next = !item.requires_action;
+            onUpdate(item.id, { requires_action: next });
+            if (next) setExpanded(true);
+          }}
         >
           <Text style={itemStyles.actionBtnIcon}>⚠️</Text>
           <Text style={[itemStyles.actionBtnTxt, item.requires_action && { color: colors.warning }]}>
@@ -439,48 +445,100 @@ function CheckItemCard({
 
 const itemStyles = StyleSheet.create({
   card: {
-    backgroundColor: colors.card, borderRadius: 16, borderLeftWidth: 4,
-    marginBottom: 16, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 10, elevation: 3, padding: 16,
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    borderLeftWidth: 4,
+    marginBottom: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 3,
+    padding: 16,
   },
-  cardHead:      { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 12 },
-  numBadge:      { width: 28, height: 28, borderRadius: 8, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  numText:       { color: '#fff', fontSize: 12, fontWeight: '800' },
-  checkName:     { fontSize: 14, fontWeight: '700', color: colors.text, lineHeight: 19 },
-  subEquip:      { fontSize: 10, color: colors.disabled, marginTop: 2, fontWeight: '500' },
-  statusPill:    { borderWidth: 1.5, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
-  statusPillTxt: { fontSize: 10, fontWeight: '800' },
+  cardHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 12 },
+  numBadge: {
+    width: 28, height: 28, borderRadius: 8,
+    backgroundColor: colors.primary,
+    alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0,
+  },
+  numText:      { color: '#fff', fontSize: 12, fontWeight: '800' },
+  checkName:    { fontSize: 14, fontWeight: '700', color: colors.text, lineHeight: 19 },
+  subEquip:     { fontSize: 10, color: colors.disabled, marginTop: 2, fontWeight: '500' },
+  statusPill: {
+    borderWidth: 1.5, borderRadius: 8,
+    paddingHorizontal: 8, paddingVertical: 3,
+  },
+  statusPillTxt:{ fontSize: 10, fontWeight: '800' },
 
-  standardBox:   { backgroundColor: '#EFF6FF', borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#BFDBFE', marginBottom: 14 },
-  standardLabel: { fontSize: 9, fontWeight: '800', color: '#3B82F6', letterSpacing: 0.8, marginBottom: 4 },
-  standardText:  { fontSize: 12, color: '#1E40AF', fontStyle: 'italic', lineHeight: 17 },
+  standardBox: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: 10, padding: 10,
+    borderWidth: 1, borderColor: '#BFDBFE',
+    marginBottom: 14,
+  },
+  standardLabel:{ fontSize: 9, fontWeight: '800', color: '#3B82F6', letterSpacing: 0.8, marginBottom: 4 },
+  standardText: { fontSize: 12, color: '#1E40AF', fontStyle: 'italic', lineHeight: 17 },
 
-  section:      { marginBottom: 14 },
-  sectionLabel: { fontSize: 9, fontWeight: '800', color: colors.disabled, letterSpacing: 0.8, marginBottom: 8 },
+  section:       { marginBottom: 14 },
+  sectionLabel:  { fontSize: 9, fontWeight: '800', color: colors.disabled, letterSpacing: 0.8, marginBottom: 8 },
 
-  pmRow:       { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  skipWarn:    { marginTop: 8, backgroundColor: '#FFF0F3', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 },
-  skipWarnTxt: { fontSize: 10, color: '#F1416C', fontWeight: '600' },
+  pmRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  skipWarn: {
+    marginTop: 8, backgroundColor: '#FFF0F3',
+    borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4,
+  },
+  skipWarnTxt:  { fontSize: 10, color: '#F1416C', fontWeight: '600' },
 
-  timeRow:       { flexDirection: 'row', gap: 10 },
-  timeCol:       { flex: 1 },
-  timePlanLabel: { fontSize: 9, fontWeight: '600', color: colors.disabled, marginBottom: 2 },
-  timePlanVal:   { fontSize: 12, fontWeight: '700', color: colors.subtext, marginBottom: 5 },
-  timeInput:     { borderWidth: 1, borderColor: colors.border, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7, fontSize: 13, fontWeight: '700', color: colors.text, backgroundColor: '#F8F9FF', textAlign: 'center' },
+  timeRow: { flexDirection: 'row', gap: 10 },
+  timeCol: { flex: 1 },
+  timePlanLabel:{ fontSize: 9, fontWeight: '600', color: colors.disabled, marginBottom: 2 },
+  timePlanVal:  { fontSize: 12, fontWeight: '700', color: colors.subtext, marginBottom: 5 },
+  timeInput: {
+    borderWidth: 1, borderColor: colors.border,
+    borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7,
+    fontSize: 13, fontWeight: '700', color: colors.text,
+    backgroundColor: '#F8F9FF', textAlign: 'center',
+  },
 
-  measInput:    { borderWidth: 1, borderColor: colors.border, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 13, color: colors.text, backgroundColor: '#F8F9FF' },
-  remarksInput: { borderWidth: 1, borderColor: colors.border, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 13, color: colors.text, minHeight: 60, textAlignVertical: 'top' },
+  measInput: {
+    borderWidth: 1, borderColor: colors.border,
+    borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8,
+    fontSize: 13, color: colors.text, backgroundColor: '#F8F9FF',
+  },
 
-  actionRow:      { flexDirection: 'row', gap: 10, marginTop: 4 },
-  actionBtn:      { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#F9FAFB', borderWidth: 1.5, borderColor: colors.border, borderRadius: 10, paddingVertical: 10 },
+  remarksInput: {
+    borderWidth: 1, borderColor: colors.border,
+    borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8,
+    fontSize: 13, color: colors.text, minHeight: 60, textAlignVertical: 'top',
+  },
+
+  actionRow:    { flexDirection: 'row', gap: 10, marginTop: 4 },
+  actionBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'center', gap: 6,
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1.5, borderColor: colors.border,
+    borderRadius: 10, paddingVertical: 10,
+  },
   actionBtnActive:{ borderColor: colors.warning, backgroundColor: '#FFFBEB' },
-  actionBtnIcon:  { fontSize: 14 },
-  actionBtnTxt:   { fontSize: 12, fontWeight: '700', color: colors.subtext },
+  actionBtnIcon: { fontSize: 14 },
+  actionBtnTxt:  { fontSize: 12, fontWeight: '700', color: colors.subtext },
 
-  actionDetail:      { marginTop: 12, backgroundColor: '#FFFBEB', borderRadius: 10, padding: 10, borderWidth: 1.5, borderColor: '#FDE68A' },
-  actionDetailLabel: { fontSize: 9, fontWeight: '800', color: colors.warning, letterSpacing: 0.8, marginBottom: 6 },
-  actionInput:       { borderWidth: 1, borderColor: '#FCD34D', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 13, color: colors.text, backgroundColor: '#FFFEF0', minHeight: 48, textAlignVertical: 'top' },
+  actionDetail: {
+    marginTop: 12, backgroundColor: '#FFFBEB',
+    borderRadius: 10, padding: 10,
+    borderWidth: 1.5, borderColor: '#FDE68A',
+  },
+  actionDetailLabel:{ fontSize: 9, fontWeight: '800', color: colors.warning, letterSpacing: 0.8, marginBottom: 6 },
+  actionInput: {
+    borderWidth: 1, borderColor: '#FCD34D',
+    borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8,
+    fontSize: 13, color: colors.text, backgroundColor: '#FFFEF0',
+    minHeight: 48, textAlignVertical: 'top',
+  },
 });
 
 // ── Sub Equipment Section Header ──────────────────────────────────────────────
@@ -501,7 +559,14 @@ function SectionHeader({ title, count, done }: { title: string; count: number; d
 }
 
 const sectionHStyles = StyleSheet.create({
-  wrap:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#EEF2FF', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 12, marginTop: 4, borderWidth: 1, borderColor: '#C7D2FE' },
+  wrap: {
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#EEF2FF',
+    borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10,
+    marginBottom: 12, marginTop: 4,
+    borderWidth: 1, borderColor: '#C7D2FE',
+  },
   left:    { flexDirection: 'row', alignItems: 'center', gap: 8 },
   iconWrap:{ width: 28, height: 28, borderRadius: 8, backgroundColor: '#6366F1', alignItems: 'center', justifyContent: 'center' },
   title:   { fontSize: 13, fontWeight: '800', color: '#3730A3' },
@@ -528,6 +593,7 @@ function CompleteModal({
           </View>
           <Text style={modalStyles.title}>Selesaikan Pengerjaan PM?</Text>
 
+          {/* Stat row */}
           <View style={modalStyles.statRow}>
             <View style={modalStyles.statItem}>
               <Text style={[modalStyles.statVal, { color: colors.ok }]}>{progress.ok}</Text>
@@ -570,10 +636,11 @@ function CompleteModal({
               onPress={progress.pending === 0 ? onConfirm : undefined}
               activeOpacity={progress.pending > 0 ? 1 : 0.8}
             >
-              {submitting
-                ? <ActivityIndicator color="#fff" size="small" />
-                : <Text style={modalStyles.confirmTxt}>Ya, Selesaikan PM</Text>
-              }
+              {submitting ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={modalStyles.confirmTxt}>Ya, Selesaikan PM</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -583,89 +650,47 @@ function CompleteModal({
 }
 
 const modalStyles = StyleSheet.create({
-  overlay:         { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', padding: 24 },
-  box:             { backgroundColor: '#fff', borderRadius: 24, padding: 24, width: '100%', alignItems: 'center' },
-  iconWrap:        { width: 72, height: 72, borderRadius: 22, backgroundColor: '#D1FAE5', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  title:           { fontSize: 18, fontWeight: '800', color: colors.text, marginBottom: 20, textAlign: 'center' },
-  statRow:         { flexDirection: 'row', width: '100%', marginBottom: 16, gap: 8 },
-  statItem:        { flex: 1, alignItems: 'center', backgroundColor: '#F9FAFB', borderRadius: 12, paddingVertical: 12 },
-  statVal:         { fontSize: 28, fontWeight: '800' },
-  statLabel:       { fontSize: 10, color: colors.subtext, fontWeight: '600', marginTop: 2 },
-  warnBox:         { backgroundColor: '#FEF3C7', borderRadius: 10, padding: 12, marginBottom: 10, width: '100%', borderWidth: 1, borderColor: '#FDE68A' },
-  warnTxt:         { fontSize: 12, color: '#92400E', lineHeight: 18 },
-  infoBox:         { backgroundColor: '#F0F9FF', borderRadius: 10, padding: 12, marginBottom: 20, width: '100%' },
-  infoTxt:         { fontSize: 12, color: '#0369A1', lineHeight: 18 },
-  actions:         { flexDirection: 'row', gap: 10, width: '100%' },
-  cancelBtn:       { flex: 1, paddingVertical: 14, borderRadius: 14, backgroundColor: '#F3F4F6', alignItems: 'center' },
-  cancelTxt:       { fontWeight: '700', color: '#374151', fontSize: 15 },
-  confirmBtn:      { flex: 1.5, paddingVertical: 14, borderRadius: 14, backgroundColor: colors.ok, alignItems: 'center' },
+  overlay:   { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', padding: 24 },
+  box:       { backgroundColor: '#fff', borderRadius: 24, padding: 24, width: '100%', alignItems: 'center' },
+  iconWrap:  { width: 72, height: 72, borderRadius: 22, backgroundColor: '#D1FAE5', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  title:     { fontSize: 18, fontWeight: '800', color: colors.text, marginBottom: 20, textAlign: 'center' },
+  statRow:   { flexDirection: 'row', width: '100%', marginBottom: 16, gap: 8 },
+  statItem:  { flex: 1, alignItems: 'center', backgroundColor: '#F9FAFB', borderRadius: 12, paddingVertical: 12 },
+  statVal:   { fontSize: 28, fontWeight: '800' },
+  statLabel: { fontSize: 10, color: colors.subtext, fontWeight: '600', marginTop: 2 },
+  warnBox:   { backgroundColor: '#FEF3C7', borderRadius: 10, padding: 12, marginBottom: 10, width: '100%', borderWidth: 1, borderColor: '#FDE68A' },
+  warnTxt:   { fontSize: 12, color: '#92400E', lineHeight: 18 },
+  infoBox:   { backgroundColor: '#F0F9FF', borderRadius: 10, padding: 12, marginBottom: 20, width: '100%' },
+  infoTxt:   { fontSize: 12, color: '#0369A1', lineHeight: 18 },
+  actions:   { flexDirection: 'row', gap: 10, width: '100%' },
+  cancelBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, backgroundColor: '#F3F4F6', alignItems: 'center' },
+  cancelTxt: { fontWeight: '700', color: '#374151', fontSize: 15 },
+  confirmBtn:{ flex: 1.5, paddingVertical: 14, borderRadius: 14, backgroundColor: colors.ok, alignItems: 'center' },
   confirmDisabled: { backgroundColor: colors.disabled },
-  confirmTxt:      { fontWeight: '700', color: '#fff', fontSize: 15 },
+  confirmTxt:{ fontWeight: '700', color: '#fff', fontSize: 15 },
 });
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
 interface Props {
   recordId?: number;
-  onGoBack?: () => void;
-}
-
-// Debounce helper — hanya kirim API setelah user berhenti input N ms
-function useDebounce<T>(value: T, delay: number): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(t);
-  }, [value, delay]);
-  return debounced;
+  onGoBack: () => void;
 }
 
 export default function MaintenanceWorkScreen({ recordId, onGoBack }: Props) {
-  const insets       = useSafeAreaInsets();
+  const insets = useSafeAreaInsets();
   const progressAnim = useRef(new Animated.Value(0)).current;
-  const router       = useRouter();
 
-  // ── State ──────────────────────────────────────────────────────────────────
-  const [record, setRecord]         = useState<RecordDetail | null>(null);
-  const [items, setItems]           = useState<RecordItem[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [loadError, setLoadError]   = useState<string | null>(null);
+  const [record, setRecord]         = useState<RecordDetail>(MOCK_RECORD);
+  const [items, setItems]           = useState<RecordItem[]>(MOCK_RECORD.items);
   const [showComplete, setComplete] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  // savingId: item yang sedang di-autosave ke API
-  const [savingIds, setSavingIds]   = useState<Set<number>>(new Set());
+  const [savingId, setSavingId]     = useState<number | null>(null);
 
   const progress = calcProgress(items);
+  
+  const router = useRouter();
 
-  // ── Load data dari API ─────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!recordId) {
-      setLoadError('Record ID tidak ditemukan.');
-      setLoading(false);
-      return;
-    }
-    loadRecord();
-  }, [recordId]);
-
-  async function loadRecord() {
-    try {
-      setLoading(true);
-      setLoadError(null);
-      const res = await fetchRecord(recordId!);
-      if (res.success) {
-        setRecord(res.data);
-        setItems((res.items ?? []).map(mapApiItem));
-      } else {
-        setLoadError(res.message ?? 'Gagal memuat data.');
-      }
-    } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.message ?? 'Gagal memuat data.';
-      setLoadError(msg);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // ── Animate progress bar ───────────────────────────────────────────────────
+  // Animate progress bar
   useEffect(() => {
     Animated.timing(progressAnim, {
       toValue: progress.percent,
@@ -679,93 +704,7 @@ export default function MaintenanceWorkScreen({ recordId, onGoBack }: Props) {
     outputRange: ['0%', '100%'],
   });
 
-  // ── Autosave debounce queue ────────────────────────────────────────────────
-  // Simpan perubahan item ke ref, lalu kirim ke API setelah 800ms idle
-  const pendingSaves = useRef<Map<number, Partial<RecordItem>>>(new Map());
-  const saveTimers   = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
-
-  const handleUpdateItem = useCallback((id: number, patch: Partial<RecordItem>) => {
-    // Update UI dulu (optimistic)
-    setItems(prev => prev.map(i => i.id === id ? { ...i, ...patch } : i));
-
-    // Merge patch ke pending saves
-    const existing = pendingSaves.current.get(id) ?? {};
-    pendingSaves.current.set(id, { ...existing, ...patch });
-
-    // Reset debounce timer
-    if (saveTimers.current.has(id)) {
-      clearTimeout(saveTimers.current.get(id)!);
-    }
-
-    saveTimers.current.set(id, setTimeout(async () => {
-      const latestPatch = pendingSaves.current.get(id);
-      if (!latestPatch || !recordId) return;
-      pendingSaves.current.delete(id);
-
-      // Ambil item terbaru dari state
-      setItems(current => {
-        const item = current.find(i => i.id === id);
-        if (!item) return current;
-
-        const payload = {
-          status:              item.status,
-          remarks:             item.remarks || null,
-          measurements:        item.measurement ? { value: item.measurement } : null,
-          requires_action:     item.requires_action,
-          action_required:     item.action_required || null,
-          actual_man_power:    item.actual_man_power ? Number(item.actual_man_power) : null,
-          actual_time_minutes: item.actual_time_minutes ? Number(item.actual_time_minutes) : null,
-        };
-
-        setSavingIds(s => new Set(s).add(id));
-
-        saveItem(recordId, id, payload)
-          .then(() => {
-            setSavingIds(s => { const n = new Set(s); n.delete(id); return n; });
-          })
-          .catch((err) => {
-            setSavingIds(s => { const n = new Set(s); n.delete(id); return n; });
-            console.warn(`Gagal autosave item ${id}:`, err?.response?.data ?? err?.message);
-          });
-
-        return current; // tidak ubah state di sini
-      });
-    }, 800));
-  }, [recordId]);
-
-  // ── Go back ────────────────────────────────────────────────────────────────
-  function handleGoBack() {
-    if (onGoBack) { onGoBack(); return; }
-    if (router.canGoBack()) { router.back(); return; }
-    router.replace('/(admin)/dashboard' as any);
-  }
-
-  // ── Submit PM (complete) ───────────────────────────────────────────────────
-  async function handleSubmit() {
-    if (!recordId) return;
-    try {
-      setSubmitting(true);
-      const res = await completeRecord(recordId);
-
-      if (res.success) {
-        setComplete(false);
-        Alert.alert(
-          '✅ Berhasil',
-          res.message ?? 'PM berhasil diselesaikan dan dikirim ke Checker.',
-          [{ text: 'OK', onPress: () => router.replace('/(admin)/dashboard' as any) }]
-        );
-      } else {
-        Alert.alert('Gagal', res.message ?? 'Tidak dapat menyelesaikan PM.');
-      }
-    } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.message ?? 'Terjadi kesalahan.';
-      Alert.alert('Error', msg);
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  // ── Group items by sub_equipment ───────────────────────────────────────────
+  // Group items by sub_equipment
   const grouped = items.reduce<Record<string, RecordItem[]>>((acc, item) => {
     const key = item.sub_equipment || 'General';
     if (!acc[key]) acc[key] = [];
@@ -773,42 +712,35 @@ export default function MaintenanceWorkScreen({ recordId, onGoBack }: Props) {
     return acc;
   }, {});
 
+  const handleUpdateItem = useCallback((id: number, patch: Partial<RecordItem>) => {
+    setItems(prev => prev.map(i => i.id === id ? { ...i, ...patch } : i));
+    // TODO: Ganti dengan API call ke PUT /api/maintenance-record/maintenance-records/{recordId}/items/{id}
+    setSavingId(id);
+    setTimeout(() => setSavingId(null), 1000);
+  }, []);
+
+  function handleGoBack() {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(admin)/dashboard');  // fallback jika tidak ada history
+    }
+  }
+
+  const handleSubmit = () => {
+    setSubmitting(true);
+    // TODO: API call ke POST /api/maintenance-record/maintenance-dashboard/{recordId}/complete
+    setTimeout(() => {
+      setSubmitting(false);
+      setComplete(false);
+      Alert.alert('✅ Berhasil', 'PM berhasil diselesaikan dan dikirim ke Checker.', [
+        { text: 'OK', onPress: () => router.replace('/(admin)/dashboard') },
+      ]);
+    }, 2000);
+  };
+
   const progressColor = progress.percent === 100 ? colors.ok : colors.primary;
 
-  // ── Loading state ──────────────────────────────────────────────────────────
-  if (loading) {
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg }}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ marginTop: 12, color: colors.subtext, fontSize: 14 }}>Memuat data PM...</Text>
-      </View>
-    );
-  }
-
-  if (loadError || !record) {
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg, padding: 32 }}>
-        <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
-        <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, textAlign: 'center', marginBottom: 8 }}>
-          Gagal Memuat Data
-        </Text>
-        <Text style={{ fontSize: 13, color: colors.subtext, textAlign: 'center', marginBottom: 24 }}>
-          {loadError}
-        </Text>
-        <TouchableOpacity
-          style={{ backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 }}
-          onPress={loadRecord}
-        >
-          <Text style={{ color: '#fff', fontWeight: '700' }}>Coba Lagi</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={{ marginTop: 12 }} onPress={handleGoBack}>
-          <Text style={{ color: colors.subtext }}>← Kembali</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: colors.bg }}
@@ -816,6 +748,7 @@ export default function MaintenanceWorkScreen({ recordId, onGoBack }: Props) {
     >
       {/* ── Sticky Header ── */}
       <View style={[headerStyles.wrap, { paddingTop: insets.top + 8 }]}>
+        {/* Top row */}
         <View style={headerStyles.topRow}>
           <TouchableOpacity style={headerStyles.backBtn} onPress={handleGoBack} activeOpacity={0.8}>
             <Text style={headerStyles.backIcon}>‹</Text>
@@ -829,6 +762,7 @@ export default function MaintenanceWorkScreen({ recordId, onGoBack }: Props) {
           </View>
         </View>
 
+        {/* Info row */}
         <View style={headerStyles.infoRow}>
           <View style={headerStyles.infoCell}>
             <Text style={headerStyles.infoLabel}>Equ. No</Text>
@@ -840,10 +774,11 @@ export default function MaintenanceWorkScreen({ recordId, onGoBack }: Props) {
           </View>
           <View style={headerStyles.infoCell}>
             <Text style={headerStyles.infoLabel}>PM Cycle</Text>
-            <Text style={headerStyles.infoVal}>{record.pm_cycle?.toUpperCase()}</Text>
+            <Text style={headerStyles.infoVal}>{record.pm_cycle.toUpperCase()}</Text>
           </View>
         </View>
 
+        {/* Progress row */}
         <View style={headerStyles.progressRow}>
           <View style={headerStyles.progressTrack}>
             <Animated.View style={[headerStyles.progressFill, { width: progressWidth, backgroundColor: progressColor }]} />
@@ -852,11 +787,12 @@ export default function MaintenanceWorkScreen({ recordId, onGoBack }: Props) {
           <Text style={headerStyles.progressDetail}>{progress.done}/{progress.total}</Text>
         </View>
 
+        {/* Stat row */}
         <View style={headerStyles.statRow}>
           <Text style={headerStyles.statOk}>✓ {progress.ok} OK</Text>
           <Text style={headerStyles.statNg}>✗ {progress.ng} NG</Text>
           <Text style={headerStyles.statPending}>◯ {progress.pending} Pending</Text>
-          {savingIds.size > 0 && (
+          {savingId !== null && (
             <Text style={headerStyles.savingTxt}>● Menyimpan...</Text>
           )}
         </View>
@@ -868,7 +804,7 @@ export default function MaintenanceWorkScreen({ recordId, onGoBack }: Props) {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Check Sheet Header */}
+        {/* Check Sheet Header Info */}
         <View style={contentStyles.csHeader}>
           <View style={contentStyles.csHeaderTitle}>
             <Text style={contentStyles.csHeaderTitleTxt}>📋 Preventive Maintenance Check Sheet</Text>
@@ -908,7 +844,9 @@ export default function MaintenanceWorkScreen({ recordId, onGoBack }: Props) {
         {/* NG Summary */}
         {progress.ng > 0 && (
           <View style={contentStyles.ngSummary}>
-            <Text style={contentStyles.ngSummaryTitle}>⚠ Item NG — {progress.ng} item</Text>
+            <Text style={contentStyles.ngSummaryTitle}>
+              ⚠ Item NG — {progress.ng} item
+            </Text>
             {items.filter(i => i.status === 'ng').map(i => (
               <View key={i.id} style={contentStyles.ngRow}>
                 <View style={contentStyles.ngNumBadge}>
@@ -932,7 +870,6 @@ export default function MaintenanceWorkScreen({ recordId, onGoBack }: Props) {
                   item={item}
                   recordId={record.id}
                   onUpdate={handleUpdateItem}
-                  isSaving={savingIds.has(item.id)}
                 />
               ))}
             </View>
@@ -942,21 +879,22 @@ export default function MaintenanceWorkScreen({ recordId, onGoBack }: Props) {
 
       {/* ── Footer ── */}
       <View style={[footerStyles.wrap, { paddingBottom: insets.bottom + 12 }]}>
-        <TouchableOpacity
-          style={footerStyles.draftBtn}
-          onPress={() => Alert.alert('Draft', 'Progress tersimpan otomatis setiap kali Anda mengisi item.')}
-          activeOpacity={0.8}
-        >
+        <TouchableOpacity style={footerStyles.draftBtn} activeOpacity={0.8}>
           <Text style={footerStyles.draftIcon}>💾</Text>
           <Text style={footerStyles.draftTxt}>Draft</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[footerStyles.submitBtn, progress.percent < 100 && footerStyles.submitBtnDisabled]}
+          style={[
+            footerStyles.submitBtn,
+            progress.percent < 100 && footerStyles.submitBtnDisabled,
+          ]}
           onPress={() => setComplete(true)}
           activeOpacity={progress.percent < 100 ? 1 : 0.85}
         >
           <Text style={footerStyles.submitIcon}>✅</Text>
-          <Text style={footerStyles.submitTxt}>Submit PM · {progress.percent}%</Text>
+          <Text style={footerStyles.submitTxt}>
+            Submit PM · {progress.percent}%
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -972,10 +910,10 @@ export default function MaintenanceWorkScreen({ recordId, onGoBack }: Props) {
   );
 }
 
-// ── Header styles ─────────────────────────────────────────────────────────────
 const headerStyles = StyleSheet.create({
   wrap: {
-    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: colors.border,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1, borderBottomColor: colors.border,
     paddingHorizontal: 16, paddingBottom: 10,
     shadowColor: '#000', shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.07, shadowRadius: 8, elevation: 6, zIndex: 100,
@@ -988,55 +926,54 @@ const headerStyles = StyleSheet.create({
   statusBadge: { backgroundColor: '#EFF6FF', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, borderWidth: 1, borderColor: '#BFDBFE' },
   statusTxt:   { fontSize: 9, fontWeight: '800', color: colors.blue, letterSpacing: 0.5 },
 
-  infoRow:  { flexDirection: 'row', gap: 8, marginBottom: 10 },
-  infoCell: { flex: 1, backgroundColor: '#F9FAFB', borderRadius: 8, padding: 7, borderWidth: 1, borderColor: colors.border },
-  infoLabel:{ fontSize: 8, fontWeight: '700', color: colors.disabled, letterSpacing: 0.5 },
-  infoVal:  { fontSize: 11, fontWeight: '700', color: colors.text, marginTop: 2 },
+  infoRow:     { flexDirection: 'row', gap: 8, marginBottom: 10 },
+  infoCell:    { flex: 1, backgroundColor: '#F9FAFB', borderRadius: 8, padding: 7, borderWidth: 1, borderColor: colors.border },
+  infoLabel:   { fontSize: 8, fontWeight: '700', color: colors.disabled, letterSpacing: 0.5 },
+  infoVal:     { fontSize: 11, fontWeight: '700', color: colors.text, marginTop: 2 },
 
-  progressRow:   { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
+  progressRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
   progressTrack: { flex: 1, height: 8, backgroundColor: '#F3F4F6', borderRadius: 99, overflow: 'hidden' },
   progressFill:  { height: '100%', borderRadius: 99 },
   progressPct:   { fontSize: 13, fontWeight: '800' },
   progressDetail:{ fontSize: 11, color: colors.disabled, fontWeight: '600' },
 
-  statRow:    { flexDirection: 'row', gap: 12, alignItems: 'center' },
-  statOk:     { fontSize: 11, fontWeight: '700', color: colors.ok },
-  statNg:     { fontSize: 11, fontWeight: '700', color: colors.ng },
-  statPending:{ fontSize: 11, fontWeight: '700', color: colors.disabled },
-  savingTxt:  { fontSize: 10, color: colors.warning, fontWeight: '600', marginLeft: 'auto' as any },
+  statRow:     { flexDirection: 'row', gap: 12, alignItems: 'center' },
+  statOk:      { fontSize: 11, fontWeight: '700', color: colors.ok },
+  statNg:      { fontSize: 11, fontWeight: '700', color: colors.ng },
+  statPending: { fontSize: 11, fontWeight: '700', color: colors.disabled },
+  savingTxt:   { fontSize: 10, color: colors.warning, fontWeight: '600', marginLeft: 'auto' as any },
 });
 
-// ── Content styles ────────────────────────────────────────────────────────────
 const contentStyles = StyleSheet.create({
   container: { padding: 16 },
 
-  csHeader:        { backgroundColor: '#1E3A5F', borderRadius: 14, overflow: 'hidden', marginBottom: 12 },
-  csHeaderTitle:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 12 },
+  csHeader:       { backgroundColor: '#1E3A5F', borderRadius: 14, overflow: 'hidden', marginBottom: 12 },
+  csHeaderTitle:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 12 },
   csHeaderTitleTxt:{ color: '#fff', fontWeight: '700', fontSize: 13, flex: 1 },
-  csDocLabel:      { fontSize: 8, color: 'rgba(255,255,255,0.6)', textAlign: 'right' },
-  csDocVal:        { fontSize: 11, color: '#fff', fontWeight: '700', textAlign: 'right' },
-  csHeaderGrid:    { flexDirection: 'row', backgroundColor: '#fff' },
-  csCell:          { flex: 1, padding: 8, borderRightWidth: 1, borderRightColor: colors.border },
-  csCellLabel:     { fontSize: 8, fontWeight: '700', color: colors.disabled, marginBottom: 2 },
-  csCellVal:       { fontSize: 11, fontWeight: '700', color: colors.text },
+  csDocLabel:     { fontSize: 8, color: 'rgba(255,255,255,0.6)', textAlign: 'right' },
+  csDocVal:       { fontSize: 11, color: '#fff', fontWeight: '700', textAlign: 'right' },
+  csHeaderGrid:   { flexDirection: 'row', backgroundColor: '#fff' },
+  csCell:         { flex: 1, padding: 8, borderRightWidth: 1, borderRightColor: colors.border },
+  csCellLabel:    { fontSize: 8, fontWeight: '700', color: colors.disabled, marginBottom: 2 },
+  csCellVal:      { fontSize: 11, fontWeight: '700', color: colors.text },
 
-  legendRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' },
-  legendDot: { width: 10, height: 10, borderRadius: 3 },
-  legendTxt: { fontSize: 10, fontWeight: '600', color: colors.subtext },
+  legendRow:   { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' },
+  legendDot:   { width: 10, height: 10, borderRadius: 3 },
+  legendTxt:   { fontSize: 10, fontWeight: '600', color: colors.subtext },
 
-  ngSummary:     { backgroundColor: '#FEF2F2', borderRadius: 12, padding: 12, marginBottom: 14, borderWidth: 1.5, borderColor: '#FECACA', borderStyle: 'dashed' },
-  ngSummaryTitle:{ fontSize: 13, fontWeight: '700', color: colors.ng, marginBottom: 8 },
-  ngRow:         { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 5 },
-  ngNumBadge:    { backgroundColor: '#FEE2E2', borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2 },
-  ngNumTxt:      { fontSize: 10, fontWeight: '700', color: colors.ng },
-  ngItemName:    { fontSize: 12, color: colors.text, flex: 1 },
+  ngSummary:      { backgroundColor: '#FEF2F2', borderRadius: 12, padding: 12, marginBottom: 14, borderWidth: 1.5, borderColor: '#FECACA', borderStyle: 'dashed' },
+  ngSummaryTitle: { fontSize: 13, fontWeight: '700', color: colors.ng, marginBottom: 8 },
+  ngRow:          { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 5 },
+  ngNumBadge:     { backgroundColor: '#FEE2E2', borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2 },
+  ngNumTxt:       { fontSize: 10, fontWeight: '700', color: colors.ng },
+  ngItemName:     { fontSize: 12, color: colors.text, flex: 1 },
 });
 
-// ── Footer styles ─────────────────────────────────────────────────────────────
 const footerStyles = StyleSheet.create({
   wrap: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: colors.border,
+    backgroundColor: '#fff',
+    borderTopWidth: 1, borderTopColor: colors.border,
     paddingHorizontal: 16, paddingTop: 12,
     flexDirection: 'row', gap: 10,
     shadowColor: '#000', shadowOffset: { width: 0, height: -3 },
@@ -1048,9 +985,13 @@ const footerStyles = StyleSheet.create({
     borderWidth: 1.5, borderColor: colors.border,
     borderRadius: 14, backgroundColor: '#F9FAFB',
   },
-  draftIcon:         { fontSize: 16 },
-  draftTxt:          { fontSize: 14, fontWeight: '700', color: colors.subtext },
-  submitBtn:         { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: colors.ok, borderRadius: 14, paddingVertical: 14 },
+  draftIcon: { fontSize: 16 },
+  draftTxt:  { fontSize: 14, fontWeight: '700', color: colors.subtext },
+  submitBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'center', gap: 8,
+    backgroundColor: colors.ok, borderRadius: 14, paddingVertical: 14,
+  },
   submitBtnDisabled: { backgroundColor: colors.disabled },
   submitIcon:        { fontSize: 16 },
   submitTxt:         { fontSize: 14, fontWeight: '800', color: '#fff' },

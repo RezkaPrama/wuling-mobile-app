@@ -6,19 +6,10 @@ export default function RecordDetailPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router  = useRouter();
 
-  function handleGoBack() {
-    // canGoBack() cek apakah ada history — kalau tidak, fallback ke dashboard
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace('/(admin)/dashboard' as any);
-    }
-  }
-
   return (
     <MaintenanceWorkScreen
       recordId={Number(id)}
-      onGoBack={handleGoBack}
+      onGoBack={() => router.back()}
     />
   );
 }
