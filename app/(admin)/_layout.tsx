@@ -1,30 +1,16 @@
 import FloatingNav, { AdminTab } from '@/src/components/common/FloatingNav';
-import { Tabs, usePathname, useRouter } from 'expo-router';
-import { useCallback } from 'react';
+import { Tabs, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-
-// Mapping: path segment → AdminTab
-const SEGMENT_TO_TAB: Record<string, AdminTab> = {
-  dashboard:  'dashboard',
-  maps:       'maps',
-  equipment:  'equipment',
-  profiles:   'profiles',
-};
-
-function getActiveTab(pathname: string): AdminTab {
-  // pathname contoh: "/(admin)/dashboard" atau "/(admin)/records/from-qr"
-  const segments = pathname.split('/').filter(Boolean);
-  // segments[0] = "(admin)", segments[1] = "dashboard" dst.
-  const seg = segments[1] ?? 'dashboard';
-  return SEGMENT_TO_TAB[seg] ?? 'dashboard';
-}
 
 export default function AdminLayout() {
   const router = useRouter();
-  const pathname = usePathname();
-  const activeTab = getActiveTab(pathname);
+  
+  // State lokal — sumber kebenaran tab aktif
+  const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
 
   const handleChangeTab = useCallback((tab: AdminTab) => {
+    setActiveTab(tab); // update state dulu, langsung
     switch (tab) {
       case 'dashboard':
         router.push('/(admin)/dashboard' as any);
@@ -43,11 +29,10 @@ export default function AdminLayout() {
 
   return (
     <View style={styles.root}>
-      {/* Tabs dengan tab bar bawaan disembunyikan */}
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarStyle: styles.hiddenTabBar, // ← sembunyikan tab bar native
+          tabBarStyle: styles.hiddenTabBar,
         }}
       >
         <Tabs.Screen name="dashboard" />
@@ -57,18 +42,15 @@ export default function AdminLayout() {
         <Tabs.Screen name="logout" options={{ href: null }} />
       </Tabs>
 
-      {/* Floating nav custom */}
       <FloatingNav activeTab={activeTab} onChangeTab={handleChangeTab} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
+  root: { flex: 1 },
   hiddenTabBar: {
-    display: 'none',       // sembunyikan tab bar bawaan Expo
+    display: 'none',
     height: 0,
     position: 'absolute',
   },
