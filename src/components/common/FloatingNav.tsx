@@ -20,7 +20,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { id: 'dashboard', label: 'Tasks', icon: 'calendar-outline', iconActive: 'calendar' },
-  { id: 'equipment', label: 'Equipment', icon: 'pulse-outline', iconActive: 'pulse' },
+  { id: 'equipment', label: 'Equipment', icon: 'hammer-outline', iconActive: 'hammer' },
   { id: 'maps', label: 'Layout', icon: 'map-outline', iconActive: 'map' },
   { id: 'profiles', label: 'Settings', icon: 'settings-outline', iconActive: 'settings' },
 ];
@@ -54,7 +54,7 @@ export default function FloatingNav({ activeTab, onChangeTab }: FloatingNavProps
     if (containerWidth === 0) return; // tunggu layout selesai
 
     const targetX = NAV_PADDING + activeIndex * (dynamicTabWidth + TAB_GAP);
-    console.log('moving pill to:', targetX, 'containerWidth:', containerWidth);
+    // console.log('moving pill to:', targetX, 'containerWidth:', containerWidth);
 
     Animated.spring(pillX, {
       toValue: targetX,

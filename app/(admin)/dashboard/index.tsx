@@ -1,23 +1,25 @@
+import QRScannerModal from '@/src/components/common/QRScannerModal';
 import {
-    MaintenanceRecord,
-    useMaintenanceRecords,
+  MaintenanceRecord,
+  useMaintenanceRecords,
 } from '@/src/hooks/useMaintenanceRecords';
 import { useAuthStore } from '@/src/store/authStore';
 import { borderRadius, colors, spacing, typography } from '@/src/theme';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Dimensions,
-    Modal,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  Modal,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 const { width } = Dimensions.get('window');
@@ -32,9 +34,9 @@ function formatDate(dateStr: string) {
 function statusLabel(status: string) {
   const map: Record<string, string> = {
     in_progress: 'In Progress',
-    completed:   'Completed',
-    validated:   'Validated',
-    rejected:    'Rejected',
+    completed: 'Completed',
+    validated: 'Validated',
+    rejected: 'Rejected',
   };
   return map[status] ?? status;
 }
@@ -49,9 +51,9 @@ function cycleLabel(pm_cycle: string) {
 function statusColor(status: string) {
   const map: Record<string, string> = {
     in_progress: '#F59E0B',
-    completed:   '#3B82F6',
-    validated:   '#10B981',
-    rejected:    '#EF4444',
+    completed: '#3B82F6',
+    validated: '#10B981',
+    rejected: '#EF4444',
   };
   return map[status] ?? '#6B7280';
 }
@@ -59,9 +61,9 @@ function statusColor(status: string) {
 function statusBg(status: string) {
   const map: Record<string, string> = {
     in_progress: '#FEF3C7',
-    completed:   '#EFF6FF',
-    validated:   '#D1FAE5',
-    rejected:    '#FEE2E2',
+    completed: '#EFF6FF',
+    validated: '#D1FAE5',
+    rejected: '#FEE2E2',
   };
   return map[status] ?? '#F3F4F6';
 }
@@ -71,10 +73,10 @@ type NavTab = 'dashboard' | 'schedules' | 'history' | 'profile';
 interface NavItem { key: NavTab; icon: string; label: string; route?: string; }
 
 const NAV_ITEMS: NavItem[] = [
-  { key: 'dashboard', icon: '🏠', label: 'Home',     route: '/' },
+  { key: 'dashboard', icon: '🏠', label: 'Home', route: '/' },
   { key: 'schedules', icon: '📋', label: 'Schedule', route: '/(admin)/schedules' },
-  { key: 'history',   icon: '🕐', label: 'History',  route: '/(admin)/history' },
-  { key: 'profile',   icon: '👤', label: 'Profile',  route: '/(admin)/profile' },
+  { key: 'history', icon: '🕐', label: 'History', route: '/(admin)/history' },
+  { key: 'profile', icon: '👤', label: 'Profile', route: '/(admin)/profile' },
 ];
 
 // ── Stat Card ─────────────────────────────────────────────────────────────────
@@ -224,22 +226,23 @@ function LogoutModal({
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
 export default function DashboardScreen() {
-  const [search, setSearch]             = useState('');
-  const [activeTab, setActiveTab]       = useState<NavTab>('dashboard');
-  const [showLogout, setShowLogout]     = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
+  const [showLogout, setShowLogout] = useState(false);
   const [activeStatus, setActiveStatus] = useState('all');
 
-  const router           = useRouter();
+  const router = useRouter();
   const { user, logout } = useAuthStore();
 
   const { data, isLoading, isError, refetch, isFetching } = useMaintenanceRecords({
-    search:        search || undefined,
+    search: search || undefined,
     filter_status: activeStatus !== 'all' ? activeStatus : undefined,
-    per_page:      10,
+    per_page: 10,
   });
 
   const records = data?.data?.data ?? [];
-  const stats   = data?.stats;
+  const stats = data?.stats;
 
   const initials = user?.name
     ? user.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
@@ -268,11 +271,11 @@ export default function DashboardScreen() {
   }
 
   const STATUS_FILTERS = [
-    { key: 'all',         label: 'All' },
+    { key: 'all', label: 'All' },
     { key: 'in_progress', label: 'In Progress' },
-    { key: 'completed',   label: 'Completed' },
-    { key: 'validated',   label: 'Validated' },
-    { key: 'rejected',    label: 'Rejected' },
+    { key: 'completed', label: 'Completed' },
+    { key: 'validated', label: 'Validated' },
+    { key: 'rejected', label: 'Rejected' },
   ];
 
   return (
@@ -314,10 +317,10 @@ export default function DashboardScreen() {
         {/* ── Stat Cards ── */}
         {stats && (
           <View style={statStyles.row}>
-            <StatCard label="Total"       value={stats.total}       icon="📊" color="#6366F1" bg="#EEF2FF" />
-            <StatCard label="On Progress" value={stats.in_progress} icon="⚙️"  color="#F59E0B" bg="#FEF3C7" />
-            <StatCard label="Completed"   value={stats.completed}   icon="✅" color="#3B82F6" bg="#EFF6FF" />
-            <StatCard label="Validated"   value={stats.validated}   icon="🎯" color="#10B981" bg="#D1FAE5" />
+            <StatCard label="Total" value={stats.total} icon="📊" color="#6366F1" bg="#EEF2FF" />
+            <StatCard label="On Progress" value={stats.in_progress} icon="⚙️" color="#F59E0B" bg="#FEF3C7" />
+            {/* <StatCard label="Completed" value={stats.completed} icon="✅" color="#3B82F6" bg="#EFF6FF" />
+            <StatCard label="Validated" value={stats.validated} icon="🎯" color="#10B981" bg="#D1FAE5" /> */}
           </View>
         )}
 
@@ -405,6 +408,22 @@ export default function DashboardScreen() {
         onConfirm={handleLogoutConfirm}
         onCancel={() => setShowLogout(false)}
       />
+
+      {/* ── FAB QR Scanner ── */}
+      <TouchableOpacity
+        style={styles.fabQR}
+        onPress={() => setScannerOpen(true)}
+        activeOpacity={0.85}
+      >
+        {/* <Text style={styles.fabIcon}>⊡</Text> */}
+         <Ionicons name="qr-code-outline" size={26} color="#FFFFFF" />
+      </TouchableOpacity>
+
+      <QRScannerModal
+        isOpen={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScanSuccess={(id) => router.push(`/(admin)/records/${id}` as any)}
+      />
     </View>
   );
 }
@@ -456,9 +475,9 @@ const navStyles = StyleSheet.create({
   activePill: { position: 'absolute', top: -10, width: 32, height: 3, borderRadius: 2, backgroundColor: colors.primary },
   iconWrap: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' },
   iconWrapActive: { backgroundColor: '#FEF2F2' },
-  icon:           { fontSize: 20 },
-  label:          { fontSize: 10, fontWeight: '500', color: '#9CA3AF', marginTop: 2 },
-  labelActive:    { color: colors.primary, fontWeight: '700' },
+  icon: { fontSize: 20 },
+  label: { fontSize: 10, fontWeight: '500', color: '#9CA3AF', marginTop: 2 },
+  labelActive: { color: colors.primary, fontWeight: '700' },
 });
 
 // ── Modal styles ──────────────────────────────────────────────────────────────
@@ -466,12 +485,12 @@ const modalStyles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: 32 },
   box: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: 28, width: '100%', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.15, shadowRadius: 24, elevation: 16 },
   iconWrap: { width: 64, height: 64, borderRadius: 20, backgroundColor: '#FEF2F2', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  title:       { fontSize: 20, fontWeight: '700', color: '#111827', marginBottom: 8 },
-  message:     { fontSize: 14, color: '#6B7280', textAlign: 'center', lineHeight: 20, marginBottom: 24 },
-  actions:     { flexDirection: 'row', gap: 12, width: '100%' },
-  cancelBtn:   { flex: 1, paddingVertical: 14, borderRadius: 14, backgroundColor: '#F3F4F6', alignItems: 'center' },
-  cancelText:  { fontWeight: '600', color: '#374151', fontSize: 15 },
-  confirmBtn:  { flex: 1, paddingVertical: 14, borderRadius: 14, backgroundColor: colors.primary, alignItems: 'center' },
+  title: { fontSize: 20, fontWeight: '700', color: '#111827', marginBottom: 8 },
+  message: { fontSize: 14, color: '#6B7280', textAlign: 'center', lineHeight: 20, marginBottom: 24 },
+  actions: { flexDirection: 'row', gap: 12, width: '100%' },
+  cancelBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, backgroundColor: '#F3F4F6', alignItems: 'center' },
+  cancelText: { fontWeight: '600', color: '#374151', fontSize: 15 },
+  confirmBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, backgroundColor: colors.primary, alignItems: 'center' },
   confirmText: { fontWeight: '700', color: '#FFFFFF', fontSize: 15 },
 });
 
@@ -485,7 +504,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 32, borderBottomRightRadius: 32,
   },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.lg },
-  headerSub:   { ...typography.caption, color: '#FECACA', fontWeight: '500' },
+  headerSub: { ...typography.caption, color: '#FECACA', fontWeight: '500' },
   headerTitle: { ...typography.h2, color: '#FFFFFF', marginTop: 2 },
   avatarBox: {
     width: 48, height: 48, borderRadius: 14,
@@ -501,8 +520,8 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
   },
   dateIconWrap: { backgroundColor: colors.primary, padding: 10, borderRadius: 12 },
-  dateLabel:    { ...typography.caption, color: 'rgba(255,255,255,0.7)' },
-  dateValue:    { ...typography.bodyMd, color: '#FFFFFF', fontWeight: '700' },
+  dateLabel: { ...typography.caption, color: 'rgba(255,255,255,0.7)' },
+  dateValue: { ...typography.bodyMd, color: '#FFFFFF', fontWeight: '700' },
 
   searchWrap: { marginTop: spacing.lg, marginHorizontal: spacing.lg },
   searchBox: {
@@ -511,7 +530,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06, shadowRadius: 12, elevation: 4, gap: spacing.sm,
   },
-  searchIcon:  { fontSize: 16 },
+  searchIcon: { fontSize: 16 },
   searchInput: { flex: 1, fontSize: 14, color: '#111827' },
 
   chipRow: { paddingHorizontal: spacing.lg, paddingVertical: spacing.md, gap: 8 },
@@ -520,14 +539,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF', borderRadius: 20,
     borderWidth: 1, borderColor: '#E5E7EB',
   },
-  chipActive:     { backgroundColor: colors.primary, borderColor: colors.primary },
-  chipText:       { fontSize: 12, fontWeight: '600', color: '#6B7280' },
+  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipText: { fontSize: 12, fontWeight: '600', color: '#6B7280' },
   chipTextActive: { color: '#FFFFFF' },
 
   listSection: { paddingHorizontal: spacing.lg, paddingBottom: 24 },
   listHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
-  listTitle:  { ...typography.h3, color: '#111827' },
-  viewAll:    { fontSize: 11, color: colors.primary, fontWeight: '700', letterSpacing: 0.5 },
+  listTitle: { ...typography.h3, color: '#111827' },
+  viewAll: { fontSize: 11, color: colors.primary, fontWeight: '700', letterSpacing: 0.5 },
 
   card: {
     backgroundColor: '#FFFFFF', borderRadius: borderRadius.lg,
@@ -539,12 +558,12 @@ const styles = StyleSheet.create({
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing.sm },
   machineRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1, marginRight: spacing.sm },
   activityIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  machineName:  { fontSize: 13, fontWeight: '700', color: '#111827' },
+  machineName: { fontSize: 13, fontWeight: '700', color: '#111827' },
   recordNumber: { fontSize: 10, color: '#9CA3AF', fontFamily: 'monospace', marginTop: 2 },
-  badge:        { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
-  badgeText:    { fontSize: 10, fontWeight: '700' },
+  badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
+  badgeText: { fontSize: 10, fontWeight: '700' },
 
-  metaRow:  { flexDirection: 'row', gap: spacing.lg, marginTop: 6 },
+  metaRow: { flexDirection: 'row', gap: spacing.lg, marginTop: 6 },
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1 },
   metaIcon: { fontSize: 11 },
   metaText: { fontSize: 11, color: '#6B7280', flex: 1 },
@@ -554,14 +573,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md, paddingVertical: 9,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
-  footerLeft:     { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  footerLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   cardFooterText: { fontSize: 11, color: '#9CA3AF', fontWeight: '600' },
-  dot:            { fontSize: 11, color: '#D1D5DB' },
-  chevron:        { fontSize: 18, color: '#D1D5DB' },
+  dot: { fontSize: 11, color: '#D1D5DB' },
+  chevron: { fontSize: 18, color: '#D1D5DB' },
 
   emptyState: { alignItems: 'center', paddingVertical: 48, gap: spacing.sm },
-  emptyIcon:  { fontSize: 40 },
-  emptyText:  { fontSize: 14, color: '#6B7280' },
+  emptyIcon: { fontSize: 40 },
+  emptyText: { fontSize: 14, color: '#6B7280' },
   retryBtn: { marginTop: spacing.sm, backgroundColor: colors.primary, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: borderRadius.md },
-  retryText:  { color: '#fff', fontWeight: '600' },
+  retryText: { color: '#fff', fontWeight: '600' },
+  fabQR: {
+    position: 'absolute',
+    bottom: 114,   // di atas FloatingNavbar (24 bottom + 70 height + gap)
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 10,
+    zIndex: 40,
+  },
+  fabIcon: {
+    fontSize: 26,
+    color: '#FFFFFF',
+  },
 });

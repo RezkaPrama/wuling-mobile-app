@@ -43,6 +43,7 @@ export default function AdminLayout() {
       </Tabs>
 
       <FloatingNav activeTab={activeTab} onChangeTab={handleChangeTab} />
+      
     </View>
   );
 }
